@@ -25,7 +25,7 @@ You are a vertical slice architecture specialist for the OpenNet project — a s
   ```
 - **Nullable reference types** are enabled — every nullability must be explicit. Never add `#nullable disable`.
 - Use `async`/`await` throughout. Never call `.Result` or `.Wait()` on a Task.
-- Use **`DateTimeOffset`** for all date/time values — never `DateTime`. Always create new instances with `DateTimeOffset.Now`.
+- Use **`DateTimeOffset`** for all date/time values — never `DateTime`. Always create new instances with `DateTimeOffset.Now`. Use **`TimeSpan`** for durations and **`DateOnly`** for calendar dates when no time component is needed.
 - Use `this.` qualification for fields, properties, methods, and events.
 - Prefer `var` when type is apparent.
 - Prefer expression-bodied members where readable.
@@ -44,7 +44,7 @@ You are a vertical slice architecture specialist for the OpenNet project — a s
 
 - `ApplicationDbContext` lives in `src/OpenNet.Core/Data/ApplicationDbContext.cs`.
 - Inject `ApplicationDbContext` directly into handlers via constructor or endpoint delegate parameter — no repository wrapper.
-- Always use `DateTimeOffset` for entity timestamps; create with `DateTimeOffset.Now`.
+- Always use `DateTimeOffset` for entity timestamps; create with `DateTimeOffset.Now`. Use `TimeSpan` for durations and `DateOnly` for calendar-only dates.
 
 ## Checklist before finishing
 

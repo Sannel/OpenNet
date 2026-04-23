@@ -127,7 +127,7 @@ The following are non-negotiable on this project. Any deviation is a finding:
 - **Line endings**: CRLF; encoding UTF-8
 - **Brace style**: Allman — opening brace on its own line
 - **Control flow**: always use braces; no single-line statements
-- **Date/time**: `DateTimeOffset` everywhere — `DateTime` is never acceptable. New instances must always be created with `DateTimeOffset.Now`; `DateTime.Now`, `DateTime.UtcNow`, and `DateTimeOffset.UtcNow` are all violations
+- **Date/time**: `DateTimeOffset` everywhere — `DateTime` is never acceptable. New instances must always be created with `DateTimeOffset.Now`; `DateTime.Now`, `DateTime.UtcNow`, and `DateTimeOffset.UtcNow` are all violations. `TimeSpan` is permitted for durations; `DateOnly` is permitted for calendar-only dates.
 - **Async**: `async`/`await` throughout — `.Result` and `.Wait()` are bugs
 - **Nullable**: nullable reference types enabled — no `#nullable disable`, no unannotated nullability
 - **One public type per file** — internal/private nested types are allowed
