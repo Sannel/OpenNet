@@ -31,7 +31,7 @@ You are a Blazor WASM + MudBlazor UI specialist for the OpenNet project.
 - Use `@inject` for services in `.razor` files; prefer code-behind (`.razor.cs`) for complex logic.
 - Use `this.` qualification in C# code-behind.
 - Use `async Task` for event handlers — never `async void` (Blazor exception: `EventCallback` handlers may be `async void` only when required by the Blazor event system, prefer `async Task` where possible).
-- Use **`DateTimeOffset`** for all date/time values — never `DateTime`.
+- Use **`DateTimeOffset`** for all date/time values — never `DateTime`. Always create new instances with `DateTimeOffset.Now`.
 - One public component/class per file.
 
 ## Formatting

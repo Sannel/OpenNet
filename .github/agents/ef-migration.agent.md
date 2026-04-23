@@ -23,7 +23,7 @@ You are an EF Core specialist for the OpenNet project — a .NET 10 platform tha
   // Copyright (c) Sannel LLC. All rights reserved.
   // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
   ```
-- Use **`DateTimeOffset`** for all date/time properties — never `DateTime`. This is mandatory.
+- Use **`DateTimeOffset`** for all date/time properties — never `DateTime`. This is mandatory. Always create new instances with `DateTimeOffset.Now`.
 - **Nullable reference types** are enabled — annotate every property explicitly.
 - Primary keys: use `Guid` for new entity IDs (works across all three providers).
 - Use data annotations or fluent configuration in `OnModelCreating` — prefer fluent configuration for complex mappings.

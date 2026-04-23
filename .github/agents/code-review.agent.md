@@ -31,6 +31,7 @@ Bugs and logic errors that will cause incorrect behaviour at runtime:
 - Data loss risks (e.g. EF Core changes not saved, transactions not committed)
 - Incorrect provider-specific EF Core usage that will break one or more database providers
 - `DateTime` used instead of `DateTimeOffset` on entity or DTO properties
+- `DateTimeOffset.UtcNow`, `DateTime.Now`, or `DateTime.UtcNow` used to create a date/time value — only `DateTimeOffset.Now` is permitted
 - Off-by-one errors, incorrect boundary conditions
 - Logic that contradicts the documented behaviour of the feature
 
@@ -46,7 +47,8 @@ Style, convention, and maintainability violations — fix these directly in the 
 - Wrong namespace (must start with `Sannel.OpenNet.*`)
 - More than one public type in a single file
 - Nullable reference type annotation missing or suppressed with `#nullable disable`
-- `DateTime` used instead of `DateTimeOffset` in a non-entity/DTO context (e.g. local variable in a method) — correct inline
+- `DateTime` used instead of `DateTimeOffset` in any context — correct inline
+- `DateTimeOffset.UtcNow`, `DateTime.Now`, or `DateTime.UtcNow` used instead of `DateTimeOffset.Now` — correct inline
 - `var` not used when the type is apparent
 - BCL type name used instead of keyword (`String` instead of `string`, `Int32` instead of `int`, etc.)
 - Expression-bodied member opportunity missed where it would clearly improve readability
@@ -125,7 +127,7 @@ The following are non-negotiable on this project. Any deviation is a finding:
 - **Line endings**: CRLF; encoding UTF-8
 - **Brace style**: Allman — opening brace on its own line
 - **Control flow**: always use braces; no single-line statements
-- **Date/time**: `DateTimeOffset` everywhere — `DateTime` is never acceptable on entities or DTOs
+- **Date/time**: `DateTimeOffset` everywhere — `DateTime` is never acceptable. New instances must always be created with `DateTimeOffset.Now`; `DateTime.Now`, `DateTime.UtcNow`, and `DateTimeOffset.UtcNow` are all violations
 - **Async**: `async`/`await` throughout — `.Result` and `.Wait()` are bugs
 - **Nullable**: nullable reference types enabled — no `#nullable disable`, no unannotated nullability
 - **One public type per file** — internal/private nested types are allowed

@@ -38,7 +38,7 @@ Test class and file names mirror the class under test: `FooHandler` → `FooHand
 - **Nullable reference types** are enabled — annotate correctly.
 - Use `async Task` return type for async test methods — never `async void`.
 - Never call `.Result` or `.Wait()` — always `await`.
-- Use **`DateTimeOffset`** for any date/time values in test data — never `DateTime`.
+- Use **`DateTimeOffset`** for any date/time values in test data — never `DateTime`. Always create with `DateTimeOffset.Now`.
 - Use `this.` qualification for fields and properties.
 - One public class per file.
 
