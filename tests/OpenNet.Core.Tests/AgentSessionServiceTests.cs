@@ -84,19 +84,20 @@ private static Mock<IAgentClientFactory> CreateMockFactory(string replyText)
 			It.IsAny<CancellationToken>()))
 		.ReturnsAsync(new ChatResponse(new ChatMessage(ChatRole.Assistant, replyText)));
 
-	var chatAgent = new ChatClientAgent(
-		mockClient.Object,
-		"You are a helpful assistant.",
-		"Test Agent",
-		null,
-		null,
-		NullLoggerFactory.Instance,
-		null);
-
 	var mockFactory = new Mock<IAgentClientFactory>();
 	mockFactory
 		.Setup(f => f.CreateAgent(It.IsAny<Agent>()))
-		.Returns(chatAgent);
+		.Returns<Agent>(a => new ChatClientAgent(
+			mockClient.Object,
+			new ChatClientAgentOptions
+			{
+				Name = a.Name,
+				Description = a.Description,
+				ChatOptions = new ChatOptions { Instructions = a.SystemPrompt },
+				ChatHistoryProvider = new InMemoryChatHistoryProvider(new InMemoryChatHistoryProviderOptions()),
+			},
+			NullLoggerFactory.Instance,
+			null));
 
 	return mockFactory;
 }
@@ -240,6 +241,163 @@ var result = await service.SendMessageAsync(session.Id, "Hello");
 Assert.NotNull(result);
 Assert.Equal(MessageRole.Assistant, result.Role);
 Assert.Equal("Assistant response", result.Content);
-}
-}
+		}
+	}
+
+	// ---------------------------------------------------------------------------
+	// SendMessageAsync — LLM message propagation
+	// ---------------------------------------------------------------------------
+
+	[Fact]
+	public async Task SendMessageAsync_WithPriorHistory_ReplaysPriorMessagesInCorrectOrder()
+	{
+		var (connection, db) = await CreateDbAsync();
+		using (connection)
+		await using (db)
+		{
+			// Arrange
+			var agent = CreateSeedAgent();
+			var session = CreateSeedSession(agent.Id);
+			this.SeedAgentAndSession(db, agent, session);
+
+			var priorUser = new AgentMessage
+			{
+				Id = Guid.NewGuid(),
+				SessionId = session.Id,
+				Role = MessageRole.User,
+				Content = "Prior question",
+				CreatedAt = DateTimeOffset.Now.AddMinutes(-2),
+			};
+
+			var priorAssistant = new AgentMessage
+			{
+				Id = Guid.NewGuid(),
+				SessionId = session.Id,
+				Role = MessageRole.Assistant,
+				Content = "Prior answer",
+				CreatedAt = DateTimeOffset.Now.AddMinutes(-1),
+			};
+
+			db.AgentMessages.AddRange(priorUser, priorAssistant);
+			await db.SaveChangesAsync();
+
+			IList<ChatMessage>? capturedMessages = null;
+			ChatOptions? capturedOptions = null;
+
+			var mockClient = new Mock<IChatClient>();
+			mockClient
+				.Setup(c => c.GetResponseAsync(
+					It.IsAny<IEnumerable<ChatMessage>>(),
+					It.IsAny<ChatOptions?>(),
+					It.IsAny<CancellationToken>()))
+				.Callback<IEnumerable<ChatMessage>, ChatOptions, CancellationToken>((msgs, opts, ct) =>
+				{
+					capturedMessages = msgs.ToList();
+					capturedOptions = opts;
+				})
+				.ReturnsAsync(new ChatResponse(new ChatMessage(ChatRole.Assistant, "New answer")));
+
+			var mockFactory = new Mock<IAgentClientFactory>();
+			mockFactory
+				.Setup(f => f.CreateAgent(It.IsAny<Agent>()))
+				.Returns<Agent>(a => new ChatClientAgent(
+					mockClient.Object,
+					new ChatClientAgentOptions
+					{
+						Name = a.Name,
+						Description = a.Description,
+						ChatOptions = new ChatOptions { Instructions = a.SystemPrompt },
+						ChatHistoryProvider = new InMemoryChatHistoryProvider(new InMemoryChatHistoryProviderOptions()),
+					},
+					NullLoggerFactory.Instance,
+					null));
+
+			var service = new AgentSessionService(db, mockFactory.Object, NullLogger<AgentSessionService>.Instance);
+
+			// Act
+			await service.SendMessageAsync(session.Id, "New question");
+
+			// Assert
+			Assert.NotNull(capturedMessages);
+			Assert.NotNull(capturedOptions);
+
+			Assert.Equal(3, capturedMessages.Count);
+
+			Assert.Equal(ChatRole.User, capturedMessages[0].Role);
+			Assert.Equal("Prior question", capturedMessages[0].Text);
+
+			Assert.Equal(ChatRole.Assistant, capturedMessages[1].Role);
+			Assert.Equal("Prior answer", capturedMessages[1].Text);
+
+			Assert.Equal(ChatRole.User, capturedMessages[2].Role);
+			Assert.Equal("New question", capturedMessages[2].Text);
+
+			Assert.DoesNotContain(capturedMessages, m => m.Role == ChatRole.System);
+
+			Assert.Equal(agent.SystemPrompt, capturedOptions.Instructions);
+		}
+	}
+
+	[Fact]
+	public async Task SendMessageAsync_FirstMessage_SendsOnlyUserMessageToLlm()
+	{
+		var (connection, db) = await CreateDbAsync();
+		using (connection)
+		await using (db)
+		{
+			// Arrange
+			var agent = CreateSeedAgent();
+			var session = CreateSeedSession(agent.Id);
+			this.SeedAgentAndSession(db, agent, session);
+
+			IList<ChatMessage>? capturedMessages = null;
+			ChatOptions? capturedOptions = null;
+
+			var mockClient = new Mock<IChatClient>();
+			mockClient
+				.Setup(c => c.GetResponseAsync(
+					It.IsAny<IEnumerable<ChatMessage>>(),
+					It.IsAny<ChatOptions?>(),
+					It.IsAny<CancellationToken>()))
+				.Callback<IEnumerable<ChatMessage>, ChatOptions, CancellationToken>((msgs, opts, ct) =>
+				{
+					capturedMessages = msgs.ToList();
+					capturedOptions = opts;
+				})
+				.ReturnsAsync(new ChatResponse(new ChatMessage(ChatRole.Assistant, "Hi there")));
+
+			var mockFactory = new Mock<IAgentClientFactory>();
+			mockFactory
+				.Setup(f => f.CreateAgent(It.IsAny<Agent>()))
+				.Returns<Agent>(a => new ChatClientAgent(
+					mockClient.Object,
+					new ChatClientAgentOptions
+					{
+						Name = a.Name,
+						Description = a.Description,
+						ChatOptions = new ChatOptions { Instructions = a.SystemPrompt },
+						ChatHistoryProvider = new InMemoryChatHistoryProvider(new InMemoryChatHistoryProviderOptions()),
+					},
+					NullLoggerFactory.Instance,
+					null));
+
+			var service = new AgentSessionService(db, mockFactory.Object, NullLogger<AgentSessionService>.Instance);
+
+			// Act
+			await service.SendMessageAsync(session.Id, "Hello");
+
+			// Assert
+			Assert.NotNull(capturedMessages);
+			Assert.NotNull(capturedOptions);
+
+			Assert.Equal(1, capturedMessages.Count);
+
+			Assert.Equal(ChatRole.User, capturedMessages[0].Role);
+			Assert.Equal("Hello", capturedMessages[0].Text);
+
+			Assert.DoesNotContain(capturedMessages, m => m.Role == ChatRole.System);
+
+			Assert.Equal(agent.SystemPrompt, capturedOptions.Instructions);
+		}
+	}
 }

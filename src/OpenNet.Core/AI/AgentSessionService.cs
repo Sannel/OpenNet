@@ -65,6 +65,10 @@ public class AgentSessionService
 
 		var agent = session.Agent;
 
+		// Snapshot prior history before adding the new user message — EF Core's relationship
+		// fixup would otherwise include userMsg in session.Messages and double-send it.
+		var priorHistory = BuildPriorHistory(session.Messages);
+
 		var userMsg = new AgentMessage
 		{
 			Id = Guid.NewGuid(),
@@ -79,10 +83,15 @@ public class AgentSessionService
 		var chatAgent = this._factory.CreateAgent(agent);
 		var agentSession = await chatAgent.CreateSessionAsync(ct);
 
-		if (chatAgent.ChatHistoryProvider is AgentsAI.InMemoryChatHistoryProvider historyProvider
-			&& session.Messages.Count > 0)
+		if (chatAgent.ChatHistoryProvider is not AgentsAI.InMemoryChatHistoryProvider historyProvider)
 		{
-			historyProvider.SetMessages(agentSession, BuildPriorHistory(session.Messages));
+			throw new InvalidOperationException(
+				$"Expected an {nameof(AgentsAI.InMemoryChatHistoryProvider)} but got {chatAgent.ChatHistoryProvider?.GetType().Name}. Cannot seed conversation history.");
+		}
+
+		if (priorHistory.Count > 0)
+		{
+			historyProvider.SetMessages(agentSession, priorHistory);
 		}
 
 		var response = await chatAgent.RunAsync(

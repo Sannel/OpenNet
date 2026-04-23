@@ -31,11 +31,14 @@ public class AgentClientFactory : IAgentClientFactory
 	public ChatClientAgent CreateAgent(Agents.Agent agent)
 	{
 		var chatClient = this.CreateChatClient(agent);
-		return chatClient.AsAIAgent(
-			name: agent.Name,
-			description: agent.Description,
-			instructions: agent.SystemPrompt,
-			loggerFactory: this._loggerFactory);
+		var options = new ChatClientAgentOptions
+		{
+			Name = agent.Name,
+			Description = agent.Description,
+			ChatOptions = new Microsoft.Extensions.AI.ChatOptions { Instructions = agent.SystemPrompt },
+			ChatHistoryProvider = new InMemoryChatHistoryProvider(new InMemoryChatHistoryProviderOptions()),
+		};
+		return chatClient.AsAIAgent(options, this._loggerFactory, null);
 	}
 
 	private IChatClient CreateChatClient(Agents.Agent agent)
