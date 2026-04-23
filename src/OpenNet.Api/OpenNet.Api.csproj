@@ -29,6 +29,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenNet.Core\OpenNet.Core.csproj" />
+    <ProjectReference Include="..\OpenNet.Migrations.Postgres\OpenNet.Migrations.Postgres.csproj" />
+    <ProjectReference Include="..\OpenNet.Migrations.Sqlite\OpenNet.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\OpenNet.Migrations.SqlServer\OpenNet.Migrations.SqlServer.csproj" />
     <ProjectReference Include="..\OpenNet.Web\OpenNet.Web.csproj" />
   </ItemGroup>
 
