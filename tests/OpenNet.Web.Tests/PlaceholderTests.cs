@@ -1,0 +1,13 @@
+// Copyright (c) Sannel LLC. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
+
+namespace OpenNet.Web.Tests;
+
+public class PlaceholderTests
+{
+	[Fact]
+	public void Placeholder_ShouldPass()
+	{
+		Assert.True(true);
+	}
+}
