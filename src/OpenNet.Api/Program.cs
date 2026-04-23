@@ -5,8 +5,11 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
-using OpenNet.Api.Features.System;
-using OpenNet.Core.Data;
+using Sannel.OpenNet.Api.Features.System;
+using Sannel.OpenNet.Core.Data;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,11 +40,38 @@ var authBuilder = builder.Services.AddAuthentication(CookieAuthenticationDefault
 var githubConfig = builder.Configuration.GetSection("Authentication:GitHub");
 if (githubConfig.Exists() && !string.IsNullOrEmpty(githubConfig["ClientId"]))
 {
-	authBuilder.AddOpenIdConnect("GitHub", options =>
+	authBuilder.AddOAuth("GitHub", options =>
 	{
 		options.ClientId = githubConfig["ClientId"]!;
 		options.ClientSecret = githubConfig["ClientSecret"]!;
-		options.Authority = "https://github.com";
+		options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
+		options.TokenEndpoint = "https://github.com/login/oauth/access_token";
+		options.UserInformationEndpoint = "https://api.github.com/user";
+		options.CallbackPath = "/signin-github";
+		options.Scope.Add("read:user");
+		options.Scope.Add("user:email");
+		options.Events.OnCreatingTicket = async context =>
+		{
+			using var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+			using var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+			response.EnsureSuccessStatusCode();
+			using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(context.HttpContext.RequestAborted));
+			var user = json.RootElement;
+			if (user.TryGetProperty("id", out var id))
+			{
+				context.Identity!.AddClaim(new Claim(ClaimTypes.NameIdentifier, id.GetRawText().Trim('"')));
+			}
+			if (user.TryGetProperty("login", out var login))
+			{
+				context.Identity!.AddClaim(new Claim(ClaimTypes.Name, login.GetString() ?? string.Empty));
+			}
+			if (user.TryGetProperty("email", out var email) && email.ValueKind != JsonValueKind.Null)
+			{
+				context.Identity!.AddClaim(new Claim(ClaimTypes.Email, email.GetString() ?? string.Empty));
+			}
+		};
 	});
 }
 
@@ -66,6 +96,8 @@ if (entraConfig.Exists() && !string.IsNullOrEmpty(entraConfig["ClientId"]))
 		options.Authority = $"https://login.microsoftonline.com/{entraConfig["TenantId"]}/v2.0";
 	});
 }
+
+builder.Services.AddAuthorization();
 
 // Health checks
 builder.Services.AddHealthChecks();

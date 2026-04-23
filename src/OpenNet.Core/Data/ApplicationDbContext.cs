@@ -3,7 +3,7 @@
 
 using Microsoft.EntityFrameworkCore;
 
-namespace OpenNet.Core.Data;
+namespace Sannel.OpenNet.Core.Data;
 
 public class ApplicationDbContext : DbContext
 {

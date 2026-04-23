@@ -1,7 +1,7 @@
 // Copyright (c) Sannel LLC. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-namespace OpenNet.Agent;
+namespace Sannel.OpenNet.Agent;
 
 public class OpenNetWorker : BackgroundService
 {
@@ -16,7 +16,7 @@ public class OpenNetWorker : BackgroundService
 	{
 		while (!stoppingToken.IsCancellationRequested)
 		{
-			this.logger.LogInformation("OpenNet Agent running at: {time}", DateTimeOffset.UtcNow);
+			this.logger.LogInformation("OpenNet Agent running at: {time}", DateTimeOffset.Now);
 			await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
 		}
 	}

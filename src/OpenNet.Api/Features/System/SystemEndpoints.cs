@@ -4,7 +4,7 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Routing;
 
-namespace OpenNet.Api.Features.System;
+namespace Sannel.OpenNet.Api.Features.System;
 
 public static class SystemEndpoints
 {
@@ -20,7 +20,7 @@ public static class SystemEndpoints
 		return new VersionInfo(
 			typeof(SystemEndpoints).Assembly.GetName().Version?.ToString() ?? "unknown",
 			env.EnvironmentName,
-			DateTimeOffset.UtcNow
+			DateTimeOffset.Now
 		);
 	}
 }

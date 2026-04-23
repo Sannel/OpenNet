@@ -15,8 +15,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$repoRoot = (Resolve-Path "$PSScriptRoot\..\..\..")
+
 Write-Host "Publishing OpenNet.Agent..."
-dotnet publish src/OpenNet.Agent/OpenNet.Agent.csproj -c Release -r win-x64 --self-contained -o $InstallPath
+dotnet publish "$repoRoot\src\OpenNet.Agent\OpenNet.Agent.csproj" -c Release -r win-x64 --self-contained -o $InstallPath
 
 Write-Host "Creating Windows Service..."
 $existingService = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
@@ -29,11 +31,12 @@ if ($null -ne $existingService)
 }
 
 $exePath = Join-Path $InstallPath "OpenNet.Agent.exe"
+$serviceBinaryPath = '"' + $exePath + '"'
 New-Service -Name $ServiceName `
-    -DisplayName $ServiceDisplayName `
-    -Description $ServiceDescription `
-    -BinaryPathName $exePath `
-    -StartupType Automatic
+	-DisplayName $ServiceDisplayName `
+	-Description $ServiceDescription `
+	-BinaryPathName $serviceBinaryPath `
+	-StartupType Automatic
 
 Write-Host "Starting service..."
 Start-Service -Name $ServiceName

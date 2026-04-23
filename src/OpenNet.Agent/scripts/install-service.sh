@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
 INSTALL_PATH="/opt/opennet"
 SERVICE_NAME="opennet"
 SERVICE_USER="opennet"
@@ -11,7 +14,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 echo "Publishing OpenNet.Agent..."
-dotnet publish src/OpenNet.Agent/OpenNet.Agent.csproj -c Release -r linux-x64 --self-contained -o "$INSTALL_PATH"
+dotnet publish "$REPO_ROOT/src/OpenNet.Agent/OpenNet.Agent.csproj" -c Release -r linux-x64 --self-contained -o "$INSTALL_PATH"
 
 echo "Creating service user if not exists..."
 if ! id -u "$SERVICE_USER" &>/dev/null; then
@@ -23,7 +26,7 @@ chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_PATH"
 chmod +x "$INSTALL_PATH/OpenNet.Agent"
 
 echo "Installing systemd service..."
-cp opennet.service /etc/systemd/system/opennet.service
+cp "$SCRIPT_DIR/opennet.service" /etc/systemd/system/opennet.service
 
 echo "Reloading systemd..."
 systemctl daemon-reload

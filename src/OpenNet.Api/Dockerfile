@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /source
 
-COPY *.sln .
+COPY *.slnx .
 COPY src/OpenNet.Core/OpenNet.Core.csproj src/OpenNet.Core/
 COPY src/OpenNet.Api/OpenNet.Api.csproj src/OpenNet.Api/
 COPY src/OpenNet.Agent/OpenNet.Agent.csproj src/OpenNet.Agent/
