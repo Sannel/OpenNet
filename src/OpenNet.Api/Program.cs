@@ -41,10 +41,13 @@ var authBuilder = builder.Services.AddAuthentication(CookieAuthenticationDefault
 var githubConfig = builder.Configuration.GetSection("Authentication:GitHub");
 if (githubConfig.Exists() && !string.IsNullOrEmpty(githubConfig["ClientId"]))
 {
+	var githubClientSecret = githubConfig["ClientSecret"]
+		?? throw new InvalidOperationException("Authentication:GitHub:ClientSecret is required.");
+
 	authBuilder.AddOAuth("GitHub", options =>
 	{
 		options.ClientId = githubConfig["ClientId"]!;
-		options.ClientSecret = githubConfig["ClientSecret"]!;
+		options.ClientSecret = githubClientSecret;
 		options.AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
 		options.TokenEndpoint = "https://github.com/login/oauth/access_token";
 		options.UserInformationEndpoint = "https://api.github.com/user";
