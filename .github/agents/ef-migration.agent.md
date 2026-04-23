@@ -36,7 +36,7 @@ These rules are critical — violations will break at least one provider:
 - Never use provider-specific column types in fluent configuration (e.g., no `HasColumnType("nvarchar(max)")`). Use `.HasMaxLength()` instead.
 - For string columns, always set a max length via `.HasMaxLength(n)` — unlimited strings behave differently across providers.
 - For `Guid` primary keys, do not assume auto-generation — configure it explicitly: `.ValueGeneratedOnAdd()`.
-- `DateTimeOffset` is natively supported by all three providers — no conversion needed.
+- Use `DateTimeOffset` for date/time properties across all providers, but note that SQLite does not have a native `DateTimeOffset` storage type; EF Core maps it via provider conversion/value conversion. Be careful about precision, ordering/query semantics, and cross-provider behavior when persisting or comparing these values.
 - `decimal` precision: always specify via `.HasPrecision(p, s)` — defaults differ by provider.
 - Boolean columns: use C# `bool` — EF Core maps this correctly for all providers.
 - Avoid `[DatabaseGenerated]` attributes that are provider-specific.
