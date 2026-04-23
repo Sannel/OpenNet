@@ -55,7 +55,7 @@ dotnet test --collect:"XPlat Code Coverage"
 ## Data / EF Core
 
 - Target **SQL Server, PostgreSQL, and SQLite** — all three must be supported simultaneously via provider-specific registrations.
-- Always use **`DateTimeOffset`** (never `DateTime`) for all date/time properties in entities and DTOs.
+- Always use **`DateTimeOffset`** (never `DateTime`) for all date/time properties in entities and DTOs. Always create new instances with `DateTimeOffset.Now` — never `DateTime.Now`, `DateTime.UtcNow`, or `DateTimeOffset.UtcNow`.
 - Migrations must be compatible with all three providers.
 
 ## Coding Conventions
