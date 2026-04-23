@@ -75,25 +75,23 @@ if (githubConfig.Exists() && !string.IsNullOrEmpty(githubConfig["ClientId"]))
 	});
 }
 
-var googleConfig = builder.Configuration.GetSection("Authentication:Google");
-if (googleConfig.Exists() && !string.IsNullOrEmpty(googleConfig["ClientId"]))
+foreach (var providerSection in builder.Configuration.GetSection("Authentication:OpenIdConnect").GetChildren())
 {
-	authBuilder.AddOpenIdConnect("Google", options =>
+	var clientId = providerSection["ClientId"];
+	if (string.IsNullOrEmpty(clientId))
 	{
-		options.ClientId = googleConfig["ClientId"]!;
-		options.ClientSecret = googleConfig["ClientSecret"]!;
-		options.Authority = "https://accounts.google.com";
-	});
-}
+		continue;
+	}
 
-var entraConfig = builder.Configuration.GetSection("Authentication:EntraId");
-if (entraConfig.Exists() && !string.IsNullOrEmpty(entraConfig["ClientId"]))
-{
-	authBuilder.AddOpenIdConnect("EntraId", options =>
+	var schemeName = providerSection.Key;
+	var clientSecret = providerSection["ClientSecret"]!;
+	var authority = providerSection["Authority"]!;
+
+	authBuilder.AddOpenIdConnect(schemeName, options =>
 	{
-		options.ClientId = entraConfig["ClientId"]!;
-		options.ClientSecret = entraConfig["ClientSecret"]!;
-		options.Authority = $"https://login.microsoftonline.com/{entraConfig["TenantId"]}/v2.0";
+		options.ClientId = clientId;
+		options.ClientSecret = clientSecret;
+		options.Authority = authority;
 	});
 }
 

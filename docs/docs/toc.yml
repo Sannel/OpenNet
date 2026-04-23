@@ -4,3 +4,5 @@
   href: getting-started.md
 - name: Product Plan
   href: product-plan.md
+- name: Authentication
+  href: authentication/
