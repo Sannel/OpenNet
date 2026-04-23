@@ -1,6 +1,6 @@
 # Authentication Overview
 
-OpenNet supports multiple authentication methods, all configured via `appsettings.json` (or environment variables / secrets). No provider names or URLs are hardcoded in source.
+OpenNet supports multiple authentication methods, configured via `appsettings.json` (or environment variables / secrets). OpenID Connect providers are fully configuration-driven. GitHub OAuth uses fixed built-in endpoint URLs because GitHub does not provide OIDC discovery.
 
 ## GitHub OAuth
 

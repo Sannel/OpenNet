@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using Sannel.OpenNet.Api.Features.System;
 using Sannel.OpenNet.Core.Data;
+using Scalar.AspNetCore;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
@@ -53,8 +54,9 @@ if (githubConfig.Exists() && !string.IsNullOrEmpty(githubConfig["ClientId"]))
 		options.Events.OnCreatingTicket = async context =>
 		{
 			using var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+			request.Headers.UserAgent.Add(new ProductInfoHeaderValue("OpenNet", "1.0"));
 			using var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
 			response.EnsureSuccessStatusCode();
 			using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(context.HttpContext.RequestAborted));
@@ -84,8 +86,18 @@ foreach (var providerSection in builder.Configuration.GetSection("Authentication
 	}
 
 	var schemeName = providerSection.Key;
-	var clientSecret = providerSection["ClientSecret"]!;
-	var authority = providerSection["Authority"]!;
+	var clientSecret = providerSection["ClientSecret"];
+	var authority = providerSection["Authority"];
+
+	if (string.IsNullOrEmpty(clientSecret))
+	{
+		throw new InvalidOperationException($"Authentication:OpenIdConnect:{schemeName}:ClientSecret is required.");
+	}
+
+	if (string.IsNullOrEmpty(authority))
+	{
+		throw new InvalidOperationException($"Authentication:OpenIdConnect:{schemeName}:Authority is required.");
+	}
 
 	authBuilder.AddOpenIdConnect(schemeName, options =>
 	{
@@ -96,6 +108,9 @@ foreach (var providerSection in builder.Configuration.GetSection("Authentication
 }
 
 builder.Services.AddAuthorization();
+
+// OpenAPI
+builder.Services.AddOpenApi();
 
 // Health checks
 builder.Services.AddHealthChecks();
@@ -111,6 +126,12 @@ builder.Services.AddApiVersioning(options =>
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+	app.MapOpenApi();
+	app.MapScalarApiReference();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
