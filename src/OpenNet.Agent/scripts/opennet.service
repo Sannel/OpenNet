@@ -1,0 +1,19 @@
+[Unit]
+Description=OpenNet Agent Service
+After=network.target
+
+[Service]
+Type=notify
+User=opennet
+Group=opennet
+WorkingDirectory=/opt/opennet
+ExecStart=/opt/opennet/OpenNet.Agent
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=opennet
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+@OpenNet.Api_HostAddress = http://localhost:5050
+
+### Health check
+GET {{OpenNet.Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+### System info (API v1)
+GET {{OpenNet.Api_HostAddress}}/api/v1/system/info
+Accept: application/json
+
+###
+
+### OpenAPI document
+GET {{OpenNet.Api_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###

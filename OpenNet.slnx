@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OpenNet.Agent/OpenNet.Agent.csproj" />
+    <Project Path="src/OpenNet.Api/OpenNet.Api.csproj" />
+    <Project Path="src/OpenNet.Core/OpenNet.Core.csproj" />
+    <Project Path="src/OpenNet.Web/OpenNet.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OpenNet.Agent.Tests/OpenNet.Agent.Tests.csproj" />
+    <Project Path="tests/OpenNet.Api.Tests/OpenNet.Api.Tests.csproj" />
+    <Project Path="tests/OpenNet.Core.Tests/OpenNet.Core.Tests.csproj" />
+    <Project Path="tests/OpenNet.Web.Tests/OpenNet.Web.Tests.csproj" />
+  </Folder>
+</Solution>
