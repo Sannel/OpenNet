@@ -100,3 +100,4 @@ dotnet test --collect:"XPlat Code Coverage"
 - Feature branches: `feature/<name>` off `develop`, merged back to `develop`.
 - Release branches: `release/<version>` off `develop`, merged to both `main` and `develop`.
 - Hotfix branches: `hotfix/<name>` off `main`, merged to both `main` and `develop`.
+- **Never merge into `develop` (or `main`) directly.** Always create a GitHub PR using `gh pr create` and let it be merged through the PR process. This applies to all branch types.
