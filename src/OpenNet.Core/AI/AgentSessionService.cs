@@ -6,6 +6,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Sannel.OpenNet.Core.Agents;
 using Sannel.OpenNet.Core.Data;
+using AgentsAI = Microsoft.Agents.AI;
 
 namespace Sannel.OpenNet.Core.AI;
 
@@ -75,12 +76,22 @@ public class AgentSessionService
 
 		this._db.AgentMessages.Add(userMsg);
 
-		var chatMessages = BuildChatHistory(agent.SystemPrompt, session.Messages, userMessage);
+		var chatAgent = this._factory.CreateAgent(agent);
+		var agentSession = await chatAgent.CreateSessionAsync(ct);
 
-		var chatClient = this._factory.CreateChatClient(agent);
-		var completion = await chatClient.GetResponseAsync(chatMessages, cancellationToken: ct);
+		if (chatAgent.ChatHistoryProvider is AgentsAI.InMemoryChatHistoryProvider historyProvider
+			&& session.Messages.Count > 0)
+		{
+			historyProvider.SetMessages(agentSession, BuildPriorHistory(session.Messages));
+		}
 
-		var reply = completion.Text ?? string.Empty;
+		var response = await chatAgent.RunAsync(
+			new ChatMessage(ChatRole.User, userMessage),
+			agentSession,
+			options: null,
+			ct);
+
+		var reply = response.Text ?? string.Empty;
 
 		var assistantMsg = new AgentMessage
 		{
@@ -103,15 +114,9 @@ public class AgentSessionService
 		return assistantMsg;
 	}
 
-	private static List<ChatMessage> BuildChatHistory(
-		string systemPrompt,
-		IEnumerable<AgentMessage> history,
-		string newUserMessage)
+	private static List<ChatMessage> BuildPriorHistory(IEnumerable<AgentMessage> history)
 	{
-		var messages = new List<ChatMessage>
-		{
-			new(ChatRole.System, systemPrompt)
-		};
+		var messages = new List<ChatMessage>();
 
 		foreach (var msg in history)
 		{
@@ -125,8 +130,6 @@ public class AgentSessionService
 
 			messages.Add(new ChatMessage(role, msg.Content));
 		}
-
-		messages.Add(new ChatMessage(ChatRole.User, newUserMessage));
 
 		return messages;
 	}

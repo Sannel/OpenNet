@@ -31,14 +31,14 @@ public class AgentClientFactory : IAgentClientFactory
 	public ChatClientAgent CreateAgent(Agents.Agent agent)
 	{
 		var chatClient = this.CreateChatClient(agent);
-		return (ChatClientAgent)chatClient.AsAIAgent(
+		return chatClient.AsAIAgent(
 			name: agent.Name,
 			description: agent.Description,
 			instructions: agent.SystemPrompt,
 			loggerFactory: this._loggerFactory);
 	}
 
-	public IChatClient CreateChatClient(Agents.Agent agent)
+	private IChatClient CreateChatClient(Agents.Agent agent)
 	{
 		return agent.Provider switch
 		{

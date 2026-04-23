@@ -1,6 +1,7 @@
 // Copyright (c) Sannel LLC. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -46,11 +47,11 @@ public class AgentClientFactoryTests
 	}
 
 	// ---------------------------------------------------------------------------
-	// CreateChatClient — Ollama
+	// CreateAgent — Ollama
 	// ---------------------------------------------------------------------------
 
 	[Fact]
-	public void CreateChatClient_OllamaProvider_ReturnsNonNullIChatClient()
+	public void CreateAgent_OllamaProvider_ReturnsNonNullChatClientAgent()
 	{
 		// Arrange
 		var factory = CreateFactory(new OllamaOptions
@@ -62,17 +63,17 @@ public class AgentClientFactoryTests
 		var agent = CreateAgent(AgentProviderEnum.Ollama, "llama3.2");
 
 		// Act
-		var client = factory.CreateChatClient(agent);
+		var client = factory.CreateAgent(agent);
 
 		// Assert
 		Assert.NotNull(client);
 	}
 
 	[Fact]
-	public void CreateChatClient_OllamaProvider_UsesAgentModelIdWhenProvided()
+	public void CreateAgent_OllamaProvider_UsesAgentModelIdWhenProvided()
 	{
 		// Arrange — the per-agent ModelId overrides the global OllamaOptions.ModelId;
-		// observable outcome at this layer is a non-null, successfully constructed client
+		// observable outcome at this layer is a non-null, successfully constructed agent
 		// (actual model routing is exercised only at inference time).
 		var factory = CreateFactory(new OllamaOptions
 		{
@@ -83,32 +84,32 @@ public class AgentClientFactoryTests
 		var agent = CreateAgent(AgentProviderEnum.Ollama, "mistral");
 
 		// Act
-		var client = factory.CreateChatClient(agent);
+		var client = factory.CreateAgent(agent);
 
 		// Assert
 		Assert.NotNull(client);
 	}
 
 	[Fact]
-	public void CreateChatClient_OllamaProvider_ReturnsIChatClientImplementation()
+	public void CreateAgent_OllamaProvider_ReturnsChatClientAgentImplementation()
 	{
 		// Arrange
 		var factory = CreateFactory();
 		var agent = CreateAgent(AgentProviderEnum.Ollama);
 
 		// Act
-		var client = factory.CreateChatClient(agent);
+		var client = factory.CreateAgent(agent);
 
-		// Assert — must satisfy the Microsoft.Extensions.AI IChatClient contract
-		Assert.IsAssignableFrom<IChatClient>(client);
+		// Assert — must return a ChatClientAgent from the Microsoft.Agents.AI contract
+		Assert.IsAssignableFrom<ChatClientAgent>(client);
 	}
 
 	// ---------------------------------------------------------------------------
-	// CreateChatClient — AzureAI valid config
+	// CreateAgent — AzureAI valid config
 	// ---------------------------------------------------------------------------
 
 	[Fact]
-	public void CreateChatClient_AzureAIProviderWithValidConfig_ReturnsNonNullIChatClient()
+	public void CreateAgent_AzureAIProviderWithValidConfig_ReturnsNonNullChatClientAgent()
 	{
 		// Arrange — fake credentials; OpenAIClient stores them locally, no network call is made
 		var azureOptions = new AzureAIOptions
@@ -122,18 +123,18 @@ public class AgentClientFactoryTests
 		var agent = CreateAgent(AgentProviderEnum.AzureAI, "gpt-4");
 
 		// Act
-		var client = factory.CreateChatClient(agent);
+		var client = factory.CreateAgent(agent);
 
 		// Assert
 		Assert.NotNull(client);
 	}
 
 	// ---------------------------------------------------------------------------
-	// CreateChatClient — AzureAI validation failures
+	// CreateAgent — AzureAI validation failures
 	// ---------------------------------------------------------------------------
 
 	[Fact]
-	public void CreateChatClient_AzureAIProviderWithEmptyEndpoint_ThrowsInvalidOperationException()
+	public void CreateAgent_AzureAIProviderWithEmptyEndpoint_ThrowsInvalidOperationException()
 	{
 		// Arrange
 		var azureOptions = new AzureAIOptions
@@ -147,11 +148,11 @@ public class AgentClientFactoryTests
 		var agent = CreateAgent(AgentProviderEnum.AzureAI);
 
 		// Act & Assert
-		Assert.Throws<InvalidOperationException>(() => factory.CreateChatClient(agent));
+		Assert.Throws<InvalidOperationException>(() => factory.CreateAgent(agent));
 	}
 
 	[Fact]
-	public void CreateChatClient_AzureAIProviderWithWhitespaceEndpoint_ThrowsInvalidOperationException()
+	public void CreateAgent_AzureAIProviderWithWhitespaceEndpoint_ThrowsInvalidOperationException()
 	{
 		// Arrange
 		var azureOptions = new AzureAIOptions
@@ -165,11 +166,11 @@ public class AgentClientFactoryTests
 		var agent = CreateAgent(AgentProviderEnum.AzureAI);
 
 		// Act & Assert
-		Assert.Throws<InvalidOperationException>(() => factory.CreateChatClient(agent));
+		Assert.Throws<InvalidOperationException>(() => factory.CreateAgent(agent));
 	}
 
 	[Fact]
-	public void CreateChatClient_AzureAIProviderWithEmptyApiKey_ThrowsInvalidOperationException()
+	public void CreateAgent_AzureAIProviderWithEmptyApiKey_ThrowsInvalidOperationException()
 	{
 		// Arrange
 		var azureOptions = new AzureAIOptions
@@ -183,11 +184,11 @@ public class AgentClientFactoryTests
 		var agent = CreateAgent(AgentProviderEnum.AzureAI);
 
 		// Act & Assert
-		Assert.Throws<InvalidOperationException>(() => factory.CreateChatClient(agent));
+		Assert.Throws<InvalidOperationException>(() => factory.CreateAgent(agent));
 	}
 
 	[Fact]
-	public void CreateChatClient_AzureAIProviderWithWhitespaceApiKey_ThrowsInvalidOperationException()
+	public void CreateAgent_AzureAIProviderWithWhitespaceApiKey_ThrowsInvalidOperationException()
 	{
 		// Arrange
 		var azureOptions = new AzureAIOptions
@@ -201,21 +202,21 @@ public class AgentClientFactoryTests
 		var agent = CreateAgent(AgentProviderEnum.AzureAI);
 
 		// Act & Assert
-		Assert.Throws<InvalidOperationException>(() => factory.CreateChatClient(agent));
+		Assert.Throws<InvalidOperationException>(() => factory.CreateAgent(agent));
 	}
 
 	// ---------------------------------------------------------------------------
-	// CreateChatClient — unknown provider
+	// CreateAgent — unknown provider
 	// ---------------------------------------------------------------------------
 
 	[Fact]
-	public void CreateChatClient_UnknownProvider_ThrowsNotSupportedException()
+	public void CreateAgent_UnknownProvider_ThrowsNotSupportedException()
 	{
 		// Arrange — cast an out-of-range integer to force an unrecognised enum value
 		var factory = CreateFactory();
 		var agent = CreateAgent((AgentProviderEnum)999);
 
 		// Act & Assert
-		Assert.Throws<NotSupportedException>(() => factory.CreateChatClient(agent));
+		Assert.Throws<NotSupportedException>(() => factory.CreateAgent(agent));
 	}
 }

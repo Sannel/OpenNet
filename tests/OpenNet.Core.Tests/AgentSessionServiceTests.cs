@@ -1,6 +1,7 @@
 // Copyright (c) Sannel LLC. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Microsoft.Agents.AI;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
@@ -10,6 +11,7 @@ using Moq;
 using Sannel.OpenNet.Core.Agents;
 using Sannel.OpenNet.Core.AI;
 using Sannel.OpenNet.Core.Data;
+using CoreAgentSession = Sannel.OpenNet.Core.Agents.AgentSession;
 
 namespace Sannel.OpenNet.Core.Tests.AI;
 
@@ -49,9 +51,9 @@ UpdatedAt = DateTimeOffset.Now,
 };
 }
 
-private static AgentSession CreateSeedSession(Guid agentId)
+private static CoreAgentSession CreateSeedSession(Guid agentId)
 {
-return new AgentSession
+return new CoreAgentSession
 {
 Id = Guid.NewGuid(),
 AgentId = agentId,
@@ -74,20 +76,29 @@ NullLoggerFactory.Instance);
 
 private static Mock<IAgentClientFactory> CreateMockFactory(string replyText)
 {
-var mockClient = new Mock<IChatClient>();
-mockClient
-.Setup(c => c.GetResponseAsync(
-It.IsAny<IEnumerable<ChatMessage>>(),
-It.IsAny<ChatOptions?>(),
-It.IsAny<CancellationToken>()))
-.ReturnsAsync(new ChatResponse(new ChatMessage(ChatRole.Assistant, replyText)));
+	var mockClient = new Mock<IChatClient>();
+	mockClient
+		.Setup(c => c.GetResponseAsync(
+			It.IsAny<IEnumerable<ChatMessage>>(),
+			It.IsAny<ChatOptions?>(),
+			It.IsAny<CancellationToken>()))
+		.ReturnsAsync(new ChatResponse(new ChatMessage(ChatRole.Assistant, replyText)));
 
-var mockFactory = new Mock<IAgentClientFactory>();
-mockFactory
-.Setup(f => f.CreateChatClient(It.IsAny<Agent>()))
-.Returns(mockClient.Object);
+	var chatAgent = new ChatClientAgent(
+		mockClient.Object,
+		"You are a helpful assistant.",
+		"Test Agent",
+		null,
+		null,
+		NullLoggerFactory.Instance,
+		null);
 
-return mockFactory;
+	var mockFactory = new Mock<IAgentClientFactory>();
+	mockFactory
+		.Setup(f => f.CreateAgent(It.IsAny<Agent>()))
+		.Returns(chatAgent);
+
+	return mockFactory;
 }
 
 private void SeedAgent(ApplicationDbContext db, Agent agent)
@@ -96,7 +107,7 @@ db.Agents.Add(agent);
 db.SaveChanges();
 }
 
-private void SeedAgentAndSession(ApplicationDbContext db, Agent agent, AgentSession session)
+private void SeedAgentAndSession(ApplicationDbContext db, Agent agent, CoreAgentSession session)
 {
 db.Agents.Add(agent);
 db.AgentSessions.Add(session);
