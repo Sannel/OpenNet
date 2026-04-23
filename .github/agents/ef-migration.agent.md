@@ -10,6 +10,10 @@ You are an EF Core specialist for the OpenNet project — a .NET 10 platform tha
 - **Entities and DbContext**: `src/OpenNet.Core/` — namespace `Sannel.OpenNet.Core`
   - `ApplicationDbContext` is at `src/OpenNet.Core/Data/ApplicationDbContext.cs`
   - Entity classes go in `src/OpenNet.Core/Entities/` (one public class per file)
+- **Migrations are split into separate assemblies** — one project per provider, all under `src/`:
+  - `src/OpenNet.Migrations.SqlServer/` — namespace `Sannel.OpenNet.Migrations.SqlServer`
+  - `src/OpenNet.Migrations.Sqlite/` — namespace `Sannel.OpenNet.Migrations.Sqlite`
+  - `src/OpenNet.Migrations.Postgres/` — namespace `Sannel.OpenNet.Migrations.Postgres`
 - **Migration registration**: `src/OpenNet.Api/Program.cs` selects the provider via `Database:Provider` config key (`sqlserver`, `postgres`, or default SQLite)
 
 ## Entity conventions
@@ -39,17 +43,26 @@ These rules are critical — violations will break at least one provider:
 
 ## Running migrations
 
-When creating new migrations, they must be run for **all three providers** using separate migration folders:
+When creating new migrations, add them to each provider's dedicated assembly project:
 
 ```bash
-# SQLite (default)
-dotnet ef migrations add <MigrationName> --project src/OpenNet.Core --startup-project src/OpenNet.Api -- --Database:Provider=sqlite
+# SQLite
+dotnet ef migrations add <MigrationName> \
+  --project src/OpenNet.Migrations.Sqlite \
+  --startup-project src/OpenNet.Api \
+  -- --Database:Provider=sqlite
 
 # SQL Server
-dotnet ef migrations add <MigrationName> --project src/OpenNet.Core --startup-project src/OpenNet.Api -- --Database:Provider=sqlserver
+dotnet ef migrations add <MigrationName> \
+  --project src/OpenNet.Migrations.SqlServer \
+  --startup-project src/OpenNet.Api \
+  -- --Database:Provider=sqlserver
 
 # PostgreSQL
-dotnet ef migrations add <MigrationName> --project src/OpenNet.Core --startup-project src/OpenNet.Api -- --Database:Provider=postgres
+dotnet ef migrations add <MigrationName> \
+  --project src/OpenNet.Migrations.Postgres \
+  --startup-project src/OpenNet.Api \
+  -- --Database:Provider=postgres
 ```
 
 ## Formatting
@@ -69,4 +82,4 @@ dotnet ef migrations add <MigrationName> --project src/OpenNet.Core --startup-pr
 5. No provider-specific column types used.
 6. `DbSet<T>` added to `ApplicationDbContext`.
 7. Apache 2.0 header on every new `.cs` file.
-8. Migrations added for all three providers.
+8. Migrations added to all three provider assembly projects (`OpenNet.Migrations.SqlServer`, `OpenNet.Migrations.Sqlite`, `OpenNet.Migrations.Postgres`).
