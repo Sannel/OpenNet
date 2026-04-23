@@ -3,6 +3,9 @@
     <Project Path="src/OpenNet.Agent/OpenNet.Agent.csproj" />
     <Project Path="src/OpenNet.Api/OpenNet.Api.csproj" />
     <Project Path="src/OpenNet.Core/OpenNet.Core.csproj" />
+    <Project Path="src/OpenNet.Migrations.Postgres/OpenNet.Migrations.Postgres.csproj" />
+    <Project Path="src/OpenNet.Migrations.Sqlite/OpenNet.Migrations.Sqlite.csproj" />
+    <Project Path="src/OpenNet.Migrations.SqlServer/OpenNet.Migrations.SqlServer.csproj" />
     <Project Path="src/OpenNet.Web/OpenNet.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">

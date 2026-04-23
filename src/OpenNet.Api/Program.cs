@@ -5,7 +5,10 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
+using Sannel.OpenNet.Api.Features.AgentMemory;
+using Sannel.OpenNet.Api.Features.Agents;
 using Sannel.OpenNet.Api.Features.System;
+using Sannel.OpenNet.Core.AI;
 using Sannel.OpenNet.Core.Data;
 using Scalar.AspNetCore;
 using System.Net.Http.Headers;
@@ -23,13 +26,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 	switch (dbProvider.ToLowerInvariant())
 	{
 		case "sqlserver":
-			options.UseSqlServer(connectionString);
+			options.UseSqlServer(connectionString, sql => sql.MigrationsAssembly("OpenNet.Migrations.SqlServer"));
 			break;
 		case "postgres":
-			options.UseNpgsql(connectionString);
+			options.UseNpgsql(connectionString, npgsql => npgsql.MigrationsAssembly("OpenNet.Migrations.Postgres"));
 			break;
 		default:
-			options.UseSqlite(connectionString);
+			options.UseSqlite(connectionString, sqlite => sqlite.MigrationsAssembly("OpenNet.Migrations.Sqlite"));
 			break;
 	}
 });
@@ -128,6 +131,13 @@ builder.Services.AddApiVersioning(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 
+// AI provider options and factory
+builder.Services.Configure<OllamaOptions>(builder.Configuration.GetSection(OllamaOptions.SectionName));
+builder.Services.Configure<AzureAIOptions>(builder.Configuration.GetSection(AzureAIOptions.SectionName));
+builder.Services.AddScoped<IAgentClientFactory, AgentClientFactory>();
+builder.Services.AddScoped<AgentClientFactory>();
+builder.Services.AddScoped<AgentSessionService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -144,6 +154,8 @@ app.UseStaticFiles();
 
 app.MapHealthChecks("/health");
 app.MapSystemEndpoints();
+app.MapAgentEndpoints();
+app.MapAgentMemoryEndpoints();
 
 app.MapFallbackToFile("index.html");
 
